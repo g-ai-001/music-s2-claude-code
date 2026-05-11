@@ -158,7 +158,7 @@ class MusicService : MediaSessionService() {
 
     override fun onBind(intent: Intent?): IBinder {
         return if (intent?.action == MediaSessionService.SERVICE_INTERFACE) {
-            super.onBind(intent)
+            super.onBind(intent) ?: binder
         } else {
             binder
         }
