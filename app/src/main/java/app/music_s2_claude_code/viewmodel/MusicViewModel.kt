@@ -11,13 +11,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
+import app.music_s2_claude_code.data.LyricLine
 import app.music_s2_claude_code.data.Song
 import app.music_s2_claude_code.service.MusicService
+import app.music_s2_claude_code.utils.LyricParser
 import app.music_s2_claude_code.utils.LogUtils
 import app.music_s2_claude_code.utils.MediaScanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -39,6 +40,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val _isScanning = MutableLiveData(false)
     val isScanning: LiveData<Boolean> = _isScanning
 
+    private val _lyrics = MutableLiveData<List<LyricLine>>(emptyList())
+    val lyrics: LiveData<List<LyricLine>> = _lyrics
+
+    private val _currentLyricIndex = MutableLiveData(0)
+    val currentLyricIndex: LiveData<Int> = _currentLyricIndex
+
+    private val _isLyricMode = MutableLiveData(false)
+    val isLyricMode: LiveData<Boolean> = _isLyricMode
+
     private var musicService: MusicService? = null
     private var isBound = false
 
@@ -51,6 +61,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
             musicService?.addPlayerListener(playerListener)
             updatePlayerState()
+            loadLyricsForCurrentSong()
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
@@ -67,6 +78,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             updatePlayerState()
+        }
+
+        override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
+            updatePlayerState()
+            loadLyricsForCurrentSong()
         }
     }
 
@@ -99,6 +115,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun playSong(songs: List<Song>, index: Int) {
         musicService?.setPlaylist(songs, index)
         _currentSong.value = songs.getOrNull(index)
+        loadLyricsForCurrentSong()
     }
 
     fun playPause() {
@@ -115,6 +132,40 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun seekTo(position: Long) {
         musicService?.seekTo(position)
+    }
+
+    private fun loadLyricsForCurrentSong() {
+        viewModelScope.launch {
+            val song = _currentSong.value
+            if (song != null) {
+                val lrcFile = LyricParser.findLrcFile(song.path)
+                if (lrcFile != null) {
+                    _lyrics.value = LyricParser.parseLyricFile(lrcFile)
+                } else {
+                    _lyrics.value = emptyList()
+                }
+                _currentLyricIndex.value = 0
+            }
+        }
+    }
+
+    fun updateLyricProgress() {
+        val currentLyrics = _lyrics.value
+        val position = _currentPosition.value
+        if (!currentLyrics.isNullOrEmpty()) {
+            val newIndex = LyricParser.findCurrentLyricIndex(currentLyrics, position)
+            if (newIndex != _currentLyricIndex.value) {
+                _currentLyricIndex.value = newIndex
+            }
+        }
+    }
+
+    fun toggleMode() {
+        _isLyricMode.value = !(_isLyricMode.value ?: false)
+    }
+
+    fun setLyricMode(isLyric: Boolean) {
+        _isLyricMode.value = isLyric
     }
 
     private fun updatePlayerState() {

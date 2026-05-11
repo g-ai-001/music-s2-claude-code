@@ -11,6 +11,8 @@ fun Long.formatDuration(): String {
     return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
 }
 
+fun Long.formatTime(): String = this.formatDuration()
+
 fun ImageView.loadAlbumArt(albumArtUri: String?) {
     if (albumArtUri.isNullOrEmpty()) {
         setImageResource(android.R.drawable.ic_menu_gallery)

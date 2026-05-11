@@ -95,6 +95,12 @@ class MainActivity : AppCompatActivity() {
             checkPermissionAndScan()
         }
 
+        binding.miniPlayer.setOnClickListener {
+            viewModel.currentSong.value?.let {
+                PlayerActivity.start(this)
+            }
+        }
+
         binding.miniPlayBtn.setOnClickListener {
             viewModel.playPause()
         }

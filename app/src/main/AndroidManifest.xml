@@ -26,6 +26,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.PlayerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MusicS2" />
+
         <service
             android:name=".service.MusicService"
             android:exported="false"
