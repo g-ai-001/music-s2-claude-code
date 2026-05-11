@@ -4,8 +4,12 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.AudioAttributes
@@ -25,17 +29,48 @@ class MusicService : MediaSessionService() {
     private val binder = LocalBinder()
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
+    private lateinit var audioManager: AudioManager
+    private var audioFocusRequest: AudioFocusRequest? = null
+    private var hasAudioFocus = false
     private var currentPlaylist: List<Song> = emptyList()
     private var currentIndex: Int = 0
+    private var wasPlayingBeforeLoss = false
 
     inner class LocalBinder : Binder() {
         fun getService(): MusicService = this@MusicService
+    }
+
+    private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                hasAudioFocus = true
+                if (wasPlayingBeforeLoss) {
+                    player.play()
+                }
+                player.volume = 1.0f
+            }
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                hasAudioFocus = false
+                wasPlayingBeforeLoss = player.isPlaying
+                player.pause()
+                abandonAudioFocus()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                hasAudioFocus = false
+                wasPlayingBeforeLoss = player.isPlaying
+                player.pause()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                player.volume = 0.3f
+            }
+        }
     }
 
     override fun onCreate() {
         super.onCreate()
         LogUtils.i("MusicService onCreate")
 
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         initializePlayer()
         createNotificationChannel()
     }
@@ -55,7 +90,7 @@ class MusicService : MediaSessionService() {
     }
 
     private fun createNotificationChannel() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "音乐播放"
             val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(Constants.MUSIC_PLAYBACK_CHANNEL_ID, name, importance).apply {
@@ -66,15 +101,55 @@ class MusicService : MediaSessionService() {
         }
     }
 
+    private fun requestAudioFocus(): Boolean {
+        if (hasAudioFocus) return true
+
+        val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setOnAudioFocusChangeListener(audioFocusChangeListener)
+                .setAcceptsDelayedFocusGain(false)
+                .setWillPauseWhenDucked(true)
+                .build()
+            audioManager.requestAudioFocus(audioFocusRequest!!)
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.requestAudioFocus(
+                audioFocusChangeListener,
+                AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN
+            )
+        }
+
+        hasAudioFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        return hasAudioFocus
+    }
+
+    private fun abandonAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest?.let {
+                audioManager.abandonAudioFocusRequest(it)
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            audioManager.abandonAudioFocus(audioFocusChangeListener)
+        }
+        hasAudioFocus = false
+    }
+
     fun setPlaylist(songs: List<Song>, startIndex: Int = 0) {
         currentPlaylist = songs
         currentIndex = startIndex
-        LogUtils.i("设置播放列表: ${songs.size} 首歌曲, 从第 $startIndex 首开始")
+        LogUtils.i("设置播放列表: ${songs.size} 首歌曲，从第 $startIndex 首开始")
         playCurrentSong()
     }
 
     fun playCurrentSong() {
         if (currentPlaylist.isEmpty()) return
+        if (!requestAudioFocus()) {
+            LogUtils.w("无法获取音频焦点")
+            return
+        }
+
         val song = currentPlaylist[currentIndex]
         LogUtils.i("播放歌曲: ${song.title}")
 
@@ -97,7 +172,9 @@ class MusicService : MediaSessionService() {
         if (player.isPlaying) {
             player.pause()
         } else {
-            player.play()
+            if (requestAudioFocus()) {
+                player.play()
+            }
         }
         currentPlaylist.getOrNull(currentIndex)?.let {
             updateNotification(it)
@@ -170,6 +247,7 @@ class MusicService : MediaSessionService() {
         LogUtils.i("MusicService onDestroy")
         player.release()
         mediaSession.release()
+        abandonAudioFocus()
         super.onDestroy()
     }
 }

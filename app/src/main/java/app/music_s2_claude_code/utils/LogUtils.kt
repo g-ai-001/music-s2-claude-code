@@ -1,6 +1,7 @@
 package app.music_s2_claude_code.utils
 
 import android.content.Context
+import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.text.SimpleDateFormat
@@ -9,6 +10,8 @@ import java.util.Locale
 
 object LogUtils {
     private var logFile: File? = null
+    private var bufferedWriter: BufferedWriter? = null
+    private const val BUFFER_SIZE = 8192
 
     fun init(context: Context) {
         val logDir = context.getExternalFilesDir(null)
@@ -24,6 +27,7 @@ object LogUtils {
     private fun checkAndRotateLogFile() {
         logFile?.let { file ->
             if (file.exists() && file.length() > Constants.MAX_LOG_FILE_SIZE) {
+                closeWriter()
                 val backupFile = File(file.parent, "${Constants.LOG_FILE_NAME}.old")
                 if (backupFile.exists()) {
                     backupFile.delete()
@@ -31,6 +35,31 @@ object LogUtils {
                 file.renameTo(backupFile)
                 i("Log file rotated due to size limit")
             }
+        }
+    }
+
+    private fun getWriter(): BufferedWriter? {
+        if (bufferedWriter == null) {
+            logFile?.let { file ->
+                try {
+                    checkAndRotateLogFile()
+                    bufferedWriter = BufferedWriter(FileWriter(file, true), BUFFER_SIZE)
+                } catch (e: Exception) {
+                    android.util.Log.e(Constants.LOG_TAG, "Failed to create log writer: ${e.message}")
+                }
+            }
+        }
+        return bufferedWriter
+    }
+
+    private fun closeWriter() {
+        try {
+            bufferedWriter?.flush()
+            bufferedWriter?.close()
+        } catch (e: Exception) {
+            // Ignore
+        } finally {
+            bufferedWriter = null
         }
     }
 
@@ -45,15 +74,15 @@ object LogUtils {
             else -> android.util.Log.i(Constants.LOG_TAG, message)
         }
 
-        logFile?.let { file ->
-            try {
+        try {
+            getWriter()?.let { writer ->
                 checkAndRotateLogFile()
-                FileWriter(file, true).use { writer ->
-                    writer.append(logMessage)
-                }
-            } catch (e: Exception) {
-                android.util.Log.e(Constants.LOG_TAG, "Failed to write log: ${e.message}")
+                writer.write(logMessage)
+                writer.flush()
             }
+        } catch (e: Exception) {
+            android.util.Log.e(Constants.LOG_TAG, "Failed to write log: ${e.message}")
+            closeWriter()
         }
     }
 

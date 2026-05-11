@@ -3,6 +3,8 @@ package app.music_s2_claude_code.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.SeekBar
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +29,10 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var lyricAdapter: LyricAdapter
     private var progressJob: Job? = null
     private var isTrackingTouch = false
+    private var lastScrollPosition = -1
+    private val scrollHandler = Handler(Looper.getMainLooper())
+    private var pendingScrollRunnable: Runnable? = null
+    private val SCROLL_DEBOUNCE_MS = 150L
 
     companion object {
         fun start(context: Context) {
@@ -52,6 +58,8 @@ class PlayerActivity : AppCompatActivity() {
         binding.lyricRecyclerView.apply {
             layoutManager = LinearLayoutManager(this@PlayerActivity)
             adapter = lyricAdapter
+            itemAnimator = null
+            setHasFixedSize(true)
         }
     }
 
@@ -93,10 +101,10 @@ class PlayerActivity : AppCompatActivity() {
         viewModel.currentLyricIndex.observe(this) { index ->
             lyricAdapter.setCurrentLine(index)
             if (index >= 0 && index < lyricAdapter.itemCount) {
-                binding.lyricRecyclerView.smoothScrollToPosition(index)
                 viewModel.lyrics.value?.getOrNull(index)?.let {
                     binding.lyricPreview.text = it.text
                 }
+                smoothScrollToLyric(index)
             }
         }
 
@@ -109,6 +117,22 @@ class PlayerActivity : AppCompatActivity() {
                 binding.modeSwitchBtn.setImageResource(R.drawable.ic_lyric_mode)
             }
         }
+    }
+
+    private fun smoothScrollToLyric(position: Int) {
+        if (position == lastScrollPosition) return
+
+        pendingScrollRunnable?.let { scrollHandler.removeCallbacks(it) }
+
+        val runnable = Runnable {
+            if (position != lastScrollPosition) {
+                lastScrollPosition = position
+                val layoutManager = binding.lyricRecyclerView.layoutManager as LinearLayoutManager
+                layoutManager.scrollToPositionWithOffset(position, binding.lyricRecyclerView.height / 3)
+            }
+        }
+        pendingScrollRunnable = runnable
+        scrollHandler.postDelayed(runnable, SCROLL_DEBOUNCE_MS)
     }
 
     private fun setupListeners() {
@@ -182,6 +206,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        pendingScrollRunnable?.let { scrollHandler.removeCallbacks(it) }
         viewModel.unbindService(this)
     }
 }
