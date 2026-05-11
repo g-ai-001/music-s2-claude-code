@@ -19,6 +19,7 @@ import app.music_s2_claude_code.utils.LogUtils
 import app.music_s2_claude_code.utils.MediaScanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -151,7 +152,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateLyricProgress() {
         val currentLyrics = _lyrics.value
-        val position = _currentPosition.value
+        val position = _currentPosition.value ?: 0L
         if (!currentLyrics.isNullOrEmpty()) {
             val newIndex = LyricParser.findCurrentLyricIndex(currentLyrics, position)
             if (newIndex != _currentLyricIndex.value) {

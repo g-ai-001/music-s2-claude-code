@@ -37,8 +37,10 @@ object LyricParser {
             val text = matcher.group(4)?.trim() ?: ""
 
             if (text.isNotEmpty()) {
-                val timeMs = minutes * 60 * 1000L + seconds * 1000L +
-                    if (matcher.group(3)?.length == 2) milliseconds * 10L else milliseconds
+                val minutesMs = minutes * 60 * 1000L
+                val secondsMs = seconds * 1000L
+                val millisPart = if (matcher.group(3)?.length == 2) milliseconds * 10L else milliseconds
+                val timeMs = minutesMs + secondsMs + millisPart
                 return LyricLine(timeMs, text)
             }
         }

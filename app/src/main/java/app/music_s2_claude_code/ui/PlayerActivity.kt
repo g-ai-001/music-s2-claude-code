@@ -74,13 +74,13 @@ class PlayerActivity : AppCompatActivity() {
         viewModel.currentPosition.observe(this) { position ->
             if (!isTrackingTouch) {
                 binding.seekBar.progress = position.toInt()
-                binding.currentTime.text = formatTime(position)
+                binding.currentTime.text = position.formatTime()
             }
         }
 
         viewModel.duration.observe(this) { duration ->
             binding.seekBar.max = duration.toInt()
-            binding.totalTime.text = formatTime(duration)
+            binding.totalTime.text = duration.formatTime()
         }
 
         viewModel.lyrics.observe(this) { lyrics ->
@@ -139,7 +139,7 @@ class PlayerActivity : AppCompatActivity() {
         binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    binding.currentTime.text = formatTime(progress.toLong())
+                    binding.currentTime.text = progress.toLong().formatTime()
                 }
             }
 

@@ -11,6 +11,7 @@
 - [x] 0.1.2 - 代码重构与优化
 - [x] 0.1.3 - 修复APK发布到Release页面
 - [x] 0.2.0 - 播放详情页（封面模式、歌词模式）
+- [x] 0.2.1 - 修复0.2.0版本的编译错误
 - [ ] 0.3.0 - 歌单管理功能
 - [ ] 0.4.0 - 我的页面与完整UI
 - [ ] 1.0.0 - 正式版本发布
@@ -22,6 +23,16 @@
 - [ ] 搜索功能
 
 ## 短期规划
+### 0.2.1 - 修复0.2.0版本的编译错误
+- [x] 修复MusicViewModel.kt - 添加缺失的withContext import
+- [x] 修复MusicViewModel.kt - 处理currentPosition.value nullable
+- [x] 修复LyricParser.kt - 修复时间计算表达式
+- [x] 修复PlayerActivity.kt - 修正extension function调用方式
+
+**状态**: 已完成
+**版本号**: 0.2.1
+**类型**: PATCH
+
 ### 0.2.0 - 播放详情页（封面模式、歌词模式）
 - [x] 创建播放详情页Activity - PlayerActivity
 - [x] 创建播放详情页布局 - 支持封面模式和歌词模式切换
