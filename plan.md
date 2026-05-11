@@ -28,7 +28,7 @@
 ### 0.2.3 - 修复GitHub Release权限问题
 - [x] 修复GitHub Actions workflow - 添加contents: write权限配置
 
-**状态**: 进行中
+**状态**: 已发布
 **版本号**: 0.2.3
 **类型**: PATCH
 
