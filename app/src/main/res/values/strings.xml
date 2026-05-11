@@ -22,4 +22,5 @@
     <string name="no_songs_found">未找到本地音乐</string>
     <string name="permission_required">需要存储权限</string>
     <string name="grant_permission">授予权限</string>
+    <string name="refresh">刷新</string>
 </resources>
