@@ -1,0 +1,1 @@
+-keep class app.music_s2_claude_code.** { *; }
