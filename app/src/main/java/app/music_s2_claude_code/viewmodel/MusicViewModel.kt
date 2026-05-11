@@ -103,17 +103,14 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun playPause() {
         musicService?.playPause()
-        _isPlaying.value = musicService?.isPlaying() ?: false
     }
 
     fun nextSong() {
         musicService?.nextSong()
-        _currentSong.value = musicService?.getCurrentSong()
     }
 
     fun previousSong() {
         musicService?.previousSong()
-        _currentSong.value = musicService?.getCurrentSong()
     }
 
     fun seekTo(position: Long) {

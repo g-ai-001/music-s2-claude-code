@@ -4,32 +4,29 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import app.music_s2_claude_code.R
 import app.music_s2_claude_code.databinding.ActivityMainBinding
+import app.music_s2_claude_code.utils.Constants
 import app.music_s2_claude_code.utils.LogUtils
+import app.music_s2_claude_code.utils.loadAlbumArt
 import app.music_s2_claude_code.viewmodel.MusicViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MusicViewModel by viewModels()
     private lateinit var adapter: SongAdapter
-    private val handler = Handler(Looper.getMainLooper())
-    private val progressRunnable = object : Runnable {
-        override fun run() {
-            viewModel.updateProgress()
-            handler.postDelayed(this, 500)
-        }
-    }
+    private var progressJob: Job? = null
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -79,6 +76,7 @@ class MainActivity : AppCompatActivity() {
                 binding.miniPlayer.visibility = android.view.View.VISIBLE
                 binding.miniSongTitle.text = it.title
                 binding.miniSongArtist.text = it.artist
+                binding.miniAlbumArt.loadAlbumArt(it.albumArtUri)
             }
         }
 
@@ -123,15 +121,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun startProgressUpdates() {
+        progressJob?.cancel()
+        progressJob = lifecycleScope.launch {
+            while (true) {
+                viewModel.updateProgress()
+                delay(Constants.PROGRESS_UPDATE_INTERVAL_MS)
+            }
+        }
+    }
+
+    private fun stopProgressUpdates() {
+        progressJob?.cancel()
+        progressJob = null
+    }
+
     override fun onStart() {
         super.onStart()
         viewModel.bindService(this)
-        handler.post(progressRunnable)
+        startProgressUpdates()
     }
 
     override fun onStop() {
         super.onStop()
         viewModel.unbindService(this)
-        handler.removeCallbacks(progressRunnable)
+        stopProgressUpdates()
     }
 }

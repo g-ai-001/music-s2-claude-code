@@ -17,6 +17,7 @@ import androidx.media3.session.MediaSessionService
 import app.music_s2_claude_code.R
 import app.music_s2_claude_code.data.Song
 import app.music_s2_claude_code.ui.MainActivity
+import app.music_s2_claude_code.utils.Constants
 import app.music_s2_claude_code.utils.LogUtils
 
 class MusicService : MediaSessionService() {
@@ -26,9 +27,6 @@ class MusicService : MediaSessionService() {
     private lateinit var mediaSession: MediaSession
     private var currentPlaylist: List<Song> = emptyList()
     private var currentIndex: Int = 0
-
-    private val channelId = "music_playback_channel"
-    private val notificationId = 1
 
     inner class LocalBinder : Binder() {
         fun getService(): MusicService = this@MusicService
@@ -60,7 +58,7 @@ class MusicService : MediaSessionService() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val name = "音乐播放"
             val importance = NotificationManager.IMPORTANCE_LOW
-            val channel = NotificationChannel(channelId, name, importance).apply {
+            val channel = NotificationChannel(Constants.MUSIC_PLAYBACK_CHANNEL_ID, name, importance).apply {
                 description = "音乐播放控制"
             }
             val notificationManager = getSystemService(NotificationManager::class.java)
@@ -85,7 +83,7 @@ class MusicService : MediaSessionService() {
         player.prepare()
         player.play()
 
-        startForeground(notificationId, buildNotification(song))
+        startForeground(Constants.MUSIC_PLAYBACK_NOTIFICATION_ID, buildNotification(song))
     }
 
     fun playSong(index: Int) {
@@ -142,7 +140,7 @@ class MusicService : MediaSessionService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        return NotificationCompat.Builder(this, channelId)
+        return NotificationCompat.Builder(this, Constants.MUSIC_PLAYBACK_CHANNEL_ID)
             .setContentTitle(song.title)
             .setContentText(song.artist)
             .setSmallIcon(R.drawable.ic_play)
@@ -153,7 +151,7 @@ class MusicService : MediaSessionService() {
 
     private fun updateNotification(song: Song) {
         val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.notify(notificationId, buildNotification(song))
+        notificationManager.notify(Constants.MUSIC_PLAYBACK_NOTIFICATION_ID, buildNotification(song))
     }
 
     override fun onBind(intent: Intent?): IBinder {

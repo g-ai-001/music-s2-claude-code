@@ -1,9 +1,6 @@
 package app.music_s2_claude_code.utils
 
 import android.content.Context
-import android.os.Environment
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileWriter
 import java.text.SimpleDateFormat
@@ -11,8 +8,6 @@ import java.util.Date
 import java.util.Locale
 
 object LogUtils {
-    private const val TAG = "MusicS2"
-    private const val LOG_FILE_NAME = "app_log.txt"
     private var logFile: File? = null
 
     fun init(context: Context) {
@@ -21,9 +16,22 @@ object LogUtils {
             if (!it.exists()) {
                 it.mkdirs()
             }
-            logFile = File(it, LOG_FILE_NAME)
+            logFile = File(it, Constants.LOG_FILE_NAME)
         }
-        log("LogUtils initialized")
+        i("LogUtils initialized")
+    }
+
+    private fun checkAndRotateLogFile() {
+        logFile?.let { file ->
+            if (file.exists() && file.length() > Constants.MAX_LOG_FILE_SIZE) {
+                val backupFile = File(file.parent, "${Constants.LOG_FILE_NAME}.old")
+                if (backupFile.exists()) {
+                    backupFile.delete()
+                }
+                file.renameTo(backupFile)
+                i("Log file rotated due to size limit")
+            }
+        }
     }
 
     fun log(message: String, level: String = "I") {
@@ -31,19 +39,20 @@ object LogUtils {
         val logMessage = "[$timestamp] [$level] $message\n"
 
         when (level) {
-            "D" -> android.util.Log.d(TAG, message)
-            "E" -> android.util.Log.e(TAG, message)
-            "W" -> android.util.Log.w(TAG, message)
-            else -> android.util.Log.i(TAG, message)
+            "D" -> android.util.Log.d(Constants.LOG_TAG, message)
+            "E" -> android.util.Log.e(Constants.LOG_TAG, message)
+            "W" -> android.util.Log.w(Constants.LOG_TAG, message)
+            else -> android.util.Log.i(Constants.LOG_TAG, message)
         }
 
         logFile?.let { file ->
             try {
+                checkAndRotateLogFile()
                 FileWriter(file, true).use { writer ->
                     writer.append(logMessage)
                 }
             } catch (e: Exception) {
-                android.util.Log.e(TAG, "Failed to write log: ${e.message}")
+                android.util.Log.e(Constants.LOG_TAG, "Failed to write log: ${e.message}")
             }
         }
     }

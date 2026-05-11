@@ -1,6 +1,5 @@
 package app.music_s2_claude_code.utils
 
-import android.content.ContentResolver
 import android.content.Context
 import android.provider.MediaStore
 import app.music_s2_claude_code.data.Song
@@ -28,7 +27,7 @@ object MediaScanner {
         )
 
         val selection = "${MediaStore.Audio.Media.DURATION} >= ?"
-        val selectionArgs = arrayOf("30000")
+        val selectionArgs = arrayOf(Constants.MIN_SONG_DURATION_MS.toString())
 
         context.contentResolver.query(
             collection,
