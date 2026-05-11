@@ -22,9 +22,9 @@
 ## 短期规划
 ### 0.1.1 - 修复GitHub Actions构建问题
 - [x] 修复 gradle-wrapper.jar 缺失问题
-- [ ] 确保 GitHub Actions 能正常构建
+- [x] 确保 GitHub Actions 能正常构建
 
-**状态**: 进行中
+**状态**: 已发布
 **版本号**: 0.1.1
 **类型**: PATCH
 
