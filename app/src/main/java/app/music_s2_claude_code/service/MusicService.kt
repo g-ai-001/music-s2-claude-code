@@ -30,11 +30,13 @@ class MusicService : MediaSessionService() {
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
     private lateinit var audioManager: AudioManager
+    private lateinit var notificationManager: NotificationManager
     private var audioFocusRequest: AudioFocusRequest? = null
     private var hasAudioFocus = false
     private var currentPlaylist: List<Song> = emptyList()
     private var currentIndex: Int = 0
     private var wasPlayingBeforeLoss = false
+    private var lastNotificationSong: Song? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): MusicService = this@MusicService
@@ -71,6 +73,7 @@ class MusicService : MediaSessionService() {
         LogUtils.i("MusicService onCreate")
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        notificationManager = getSystemService(NotificationManager::class.java)
         initializePlayer()
         createNotificationChannel()
     }
@@ -227,8 +230,10 @@ class MusicService : MediaSessionService() {
     }
 
     private fun updateNotification(song: Song) {
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.notify(Constants.MUSIC_PLAYBACK_NOTIFICATION_ID, buildNotification(song))
+        if (lastNotificationSong != song) {
+            lastNotificationSong = song
+            notificationManager.notify(Constants.MUSIC_PLAYBACK_NOTIFICATION_ID, buildNotification(song))
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder {

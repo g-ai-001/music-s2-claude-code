@@ -153,4 +153,11 @@ class MainActivity : AppCompatActivity() {
         viewModel.unbindService(this)
         stopProgressUpdates()
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) {
+            LogUtils.release()
+        }
+    }
 }

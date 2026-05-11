@@ -90,4 +90,9 @@ object LogUtils {
     fun e(message: String) = log(message, "E")
     fun w(message: String) = log(message, "W")
     fun i(message: String) = log(message, "I")
+
+    fun release() {
+        i("LogUtils releasing resources")
+        closeWriter()
+    }
 }

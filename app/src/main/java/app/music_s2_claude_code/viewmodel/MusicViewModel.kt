@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.SharedPreferences
 import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -14,6 +15,7 @@ import androidx.media3.common.Player
 import app.music_s2_claude_code.data.LyricLine
 import app.music_s2_claude_code.data.Song
 import app.music_s2_claude_code.service.MusicService
+import app.music_s2_claude_code.utils.Constants
 import app.music_s2_claude_code.utils.LyricParser
 import app.music_s2_claude_code.utils.LogUtils
 import app.music_s2_claude_code.utils.MediaScanner
@@ -22,6 +24,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val prefs: SharedPreferences = application.getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
 
     private val _songs = MutableLiveData<List<Song>>(emptyList())
     val songs: LiveData<List<Song>> = _songs
@@ -61,6 +65,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             isBound = true
 
             musicService?.addPlayerListener(playerListener)
+            _isLyricMode.value = restoreLyricMode()
             updatePlayerState()
             loadLyricsForCurrentSong()
         }
@@ -117,6 +122,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         musicService?.setPlaylist(songs, index)
         _currentSong.value = songs.getOrNull(index)
         loadLyricsForCurrentSong()
+        savePlayerState()
     }
 
     fun playPause() {
@@ -163,10 +169,29 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleMode() {
         _isLyricMode.value = !(_isLyricMode.value ?: false)
+        savePlayerState()
     }
 
     fun setLyricMode(isLyric: Boolean) {
         _isLyricMode.value = isLyric
+        savePlayerState()
+    }
+
+    fun savePlayerState() {
+        val song = _currentSong.value
+        val position = _currentPosition.value ?: 0L
+        val isLyric = _isLyricMode.value ?: false
+
+        prefs.edit().apply {
+            putLong(Constants.KEY_LAST_SONG_ID, song?.id ?: -1L)
+            putLong(Constants.KEY_LAST_POSITION, position)
+            putBoolean(Constants.KEY_IS_LYRIC_MODE, isLyric)
+            apply()
+        }
+    }
+
+    fun restoreLyricMode(): Boolean {
+        return prefs.getBoolean(Constants.KEY_IS_LYRIC_MODE, false)
     }
 
     private fun updatePlayerState() {
@@ -178,5 +203,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateProgress() {
         _currentPosition.value = musicService?.getCurrentPosition() ?: 0L
+    }
+
+    override fun onCleared() {
+        LogUtils.i("MusicViewModel onCleared")
+        savePlayerState()
+        super.onCleared()
     }
 }

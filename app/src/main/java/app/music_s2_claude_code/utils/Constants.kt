@@ -8,4 +8,9 @@ object Constants {
     const val PROGRESS_UPDATE_INTERVAL_MS = 500L // 0.5秒
     const val MUSIC_PLAYBACK_CHANNEL_ID = "music_playback_channel"
     const val MUSIC_PLAYBACK_NOTIFICATION_ID = 1
+
+    const val PREFS_NAME = "music_player_prefs"
+    const val KEY_LAST_SONG_ID = "last_song_id"
+    const val KEY_LAST_POSITION = "last_position"
+    const val KEY_IS_LYRIC_MODE = "is_lyric_mode"
 }

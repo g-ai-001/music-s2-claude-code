@@ -13,6 +13,13 @@
 
 ## 版本历史
 
+### v0.2.4 (2026-05-12)
+- 优化 PlayerActivity - 使用协程替代 Handler 实现防抖
+- 优化 LogUtils - 添加应用退出时的资源释放
+- 优化 MusicService - 改进通知更新逻辑，避免重复更新
+- 优化 MusicViewModel - 添加状态保存与恢复功能
+- 更新 Constants - 添加状态保存相关键
+
 ### v0.2.3 (2026-05-12)
 - 修复 GitHub Actions Release 权限问题
 - 添加 contents: write 权限配置到 workflow

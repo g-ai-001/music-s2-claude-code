@@ -3,14 +3,11 @@ package app.music_s2_claude_code.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.widget.SeekBar
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import app.music_s2_claude_code.R
 import app.music_s2_claude_code.databinding.ActivityPlayerBinding
 import app.music_s2_claude_code.utils.Constants
@@ -28,10 +25,9 @@ class PlayerActivity : AppCompatActivity() {
     private val viewModel: MusicViewModel by viewModels()
     private lateinit var lyricAdapter: LyricAdapter
     private var progressJob: Job? = null
+    private var scrollDebounceJob: Job? = null
     private var isTrackingTouch = false
     private var lastScrollPosition = -1
-    private val scrollHandler = Handler(Looper.getMainLooper())
-    private var pendingScrollRunnable: Runnable? = null
     private val SCROLL_DEBOUNCE_MS = 150L
 
     companion object {
@@ -122,17 +118,15 @@ class PlayerActivity : AppCompatActivity() {
     private fun smoothScrollToLyric(position: Int) {
         if (position == lastScrollPosition) return
 
-        pendingScrollRunnable?.let { scrollHandler.removeCallbacks(it) }
-
-        val runnable = Runnable {
+        scrollDebounceJob?.cancel()
+        scrollDebounceJob = lifecycleScope.launch {
+            delay(SCROLL_DEBOUNCE_MS)
             if (position != lastScrollPosition) {
                 lastScrollPosition = position
                 val layoutManager = binding.lyricRecyclerView.layoutManager as LinearLayoutManager
                 layoutManager.scrollToPositionWithOffset(position, binding.lyricRecyclerView.height / 3)
             }
         }
-        pendingScrollRunnable = runnable
-        scrollHandler.postDelayed(runnable, SCROLL_DEBOUNCE_MS)
     }
 
     private fun setupListeners() {
@@ -206,7 +200,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        pendingScrollRunnable?.let { scrollHandler.removeCallbacks(it) }
+        scrollDebounceJob?.cancel()
         viewModel.unbindService(this)
     }
 }
