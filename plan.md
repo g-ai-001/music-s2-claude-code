@@ -21,6 +21,14 @@
 - [ ] 搜索功能
 
 ## 短期规划
+### 0.1.3 - 修复APK发布到Release页面
+- [x] 更新GitHub Actions workflow - 添加创建Release和上传APK的步骤
+- [x] 确保tag推送时自动发布APK到Release
+
+**状态**: 已发布
+**版本号**: 0.1.3
+**类型**: PATCH
+
 ### 0.1.2 - 代码重构与优化
 - [x] 优化 SongAdapter - 使用 DiffUtil 替代 notifyDataSetChanged
 - [x] 优化 LogUtils - 添加日志文件大小限制
