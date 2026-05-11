@@ -13,6 +13,16 @@
 
 ## 版本历史
 
+### v0.2.3 (2026-05-12)
+- 修复 GitHub Actions Release 权限问题
+- 添加 contents: write 权限配置到 workflow
+
+### v0.2.2 (2026-05-11)
+- 修复 LyricParser.kt 类型推断编译错误
+- 优化 LogUtils 性能，使用缓冲写入
+- 优化 MusicService，添加音频焦点处理
+- 优化 PlayerActivity，改进歌词滚动性能
+
 ### v0.2.1 (2026-05-11)
 - 修复 0.2.0 版本的编译错误
 - 修复 MusicViewModel 缺少 withContext import

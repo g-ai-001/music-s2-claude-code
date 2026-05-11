@@ -12,7 +12,8 @@
 - [x] 0.1.3 - 修复APK发布到Release页面
 - [x] 0.2.0 - 播放详情页（封面模式、歌词模式）
 - [x] 0.2.1 - 修复0.2.0版本的编译错误
-- [ ] 0.2.2 - 修复GitHub Actions workflow与代码重构优化
+- [x] 0.2.2 - 修复GitHub Actions workflow与代码重构优化
+- [ ] 0.2.3 - 修复GitHub Release权限问题
 - [ ] 0.3.0 - 歌单管理功能
 - [ ] 0.4.0 - 我的页面与完整UI
 - [ ] 1.0.0 - 正式版本发布
@@ -24,6 +25,13 @@
 - [ ] 搜索功能
 
 ## 短期规划
+### 0.2.3 - 修复GitHub Release权限问题
+- [x] 修复GitHub Actions workflow - 添加contents: write权限配置
+
+**状态**: 进行中
+**版本号**: 0.2.3
+**类型**: PATCH
+
 ### 0.2.2 - 修复GitHub Actions workflow与代码重构优化
 - [x] 修复LyricParser.kt - 修复类型推断导致的编译错误
 - [x] 优化LogUtils - 使用缓冲写入提高性能
